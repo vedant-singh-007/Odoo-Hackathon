@@ -306,4 +306,52 @@ router.delete('/account', authenticateToken, async (req, res) => {
   }
 });
 
+// backend/routes/users.js (or similar)
+router.put(
+  '/profile',
+  authenticateToken,
+  validateUserUpdate,
+  async (req, res) => {
+    try {
+      const updates = req.body;
+      const userId = req.user._id;
+
+      // If username is being changed, ensure uniqueness
+      if (updates.username) {
+        const exists = await User.findOne({ username: updates.username, _id: { $ne: userId } });
+        if (exists) {
+          return res.status(400).json({ message: 'Username is already taken', code: 'USERNAME_TAKEN' });
+        }
+      }
+
+      const user = await User.findByIdAndUpdate(
+        userId,
+        { $set: updates },
+        { new: true, runValidators: true }
+      ).select('-password');
+
+      res.json({
+        message: 'Profile updated successfully',
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          fullName: user.fullName,
+          phone: user.phone,
+          address: user.address,
+          profileImage: user.profileImage,
+          bio: user.bio,
+          preferences: user.preferences,
+          stats: user.stats
+        }
+      });
+    } catch (err) {
+      console.error('Update profile error:', err);
+      res.status(500).json({ message: 'Failed to update profile', code: 'PROFILE_UPDATE_ERROR' });
+    }
+  }
+);
+
 module.exports = router;
