@@ -41,18 +41,20 @@ const ProductsPage = () => {
       staleTime: 10 * 60 * 1000, // 10 minutes
     }
   );
+const handleFilterChange = (key, value) => {
+  const newFilters = { ...filters, [key]: value };
+  setFilters(newFilters);
 
-  const handleFilterChange = (key, value) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-    
-    // Update URL params
-    const params = new URLSearchParams();
-    Object.entries(newFilters).forEach(([k, v]) => {
-      if (v) params.set(k, v);
-    });
-    setSearchParams(params);
-  };
+  // Only include non-empty and non-null values in URL
+  const params = new URLSearchParams();
+  Object.entries(newFilters).forEach(([k, v]) => {
+    if (v !== '' && v !== null && v !== undefined) {
+      params.set(k, v);
+    }
+  });
+  setSearchParams(params);
+};
+
 
   const clearFilters = () => {
     setFilters({

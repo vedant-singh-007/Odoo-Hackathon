@@ -248,12 +248,16 @@ const validateObjectId = (paramName = 'id') => [
 // Query validation
 const validateSearchQuery = [
   query('q')
-    .optional()
+    .optional({ checkFalsy: true })
+    .isString()
+    .trim()
     .isLength({ max: 100 })
-    .withMessage('Search query cannot exceed 100 characters'),
-  
+    .withMessage('Search query cannot exceed 100 characters')
+    .matches(/^[a-zA-Z0-9\s\-'"&():]*$/)
+    .withMessage('Search query contains invalid characters'),
+
   query('category')
-    .optional()
+    .optional({ checkFalsy: true })
     .isIn([
       'Electronics', 'Clothing & Accessories', 'Home & Garden',
       'Sports & Outdoors', 'Books & Media', 'Toys & Games',
@@ -261,37 +265,37 @@ const validateSearchQuery = [
       'Furniture', 'Jewelry', 'Other'
     ])
     .withMessage('Please select a valid category'),
-  
+
   query('minPrice')
-    .optional()
+    .optional({ checkFalsy: true })
     .isFloat({ min: 0 })
     .withMessage('Minimum price must be a positive number'),
-  
+
   query('maxPrice')
-    .optional()
+    .optional({ checkFalsy: true })
     .isFloat({ min: 0 })
     .withMessage('Maximum price must be a positive number'),
-  
+
   query('condition')
-    .optional()
+    .optional({ checkFalsy: true })
     .isIn(['New', 'Like New', 'Good', 'Fair', 'Poor'])
     .withMessage('Please select a valid condition'),
-  
+
   query('sortBy')
-    .optional()
+    .optional({ checkFalsy: true })
     .isIn(['price_asc', 'price_desc', 'newest', 'oldest', 'popular'])
     .withMessage('Please select a valid sort option'),
-  
+
   query('page')
-    .optional()
+    .optional({ checkFalsy: true })
     .isInt({ min: 1 })
     .withMessage('Page must be a positive integer'),
-  
+
   query('limit')
-    .optional()
+    .optional({ checkFalsy: true })
     .isInt({ min: 1, max: 100 })
     .withMessage('Limit must be between 1 and 100'),
-  
+
   handleValidationErrors
 ];
 

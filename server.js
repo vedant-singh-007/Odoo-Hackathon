@@ -15,6 +15,12 @@ const purchaseRoutes = require('./routes/purchases');
 
 const app = express();
 
+// CORS configuration should be one of the first middleware
+app.use(cors({
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  credentials: true
+}));
+
 // Security middleware
 app.use(helmet());
 app.use(compression());
@@ -26,12 +32,6 @@ const limiter = rateLimit({
   message: 'Too many requests from this IP, please try again later.'
 });
 app.use(limiter);
-
-// CORS configuration
-app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
-  credentials: true
-}));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
