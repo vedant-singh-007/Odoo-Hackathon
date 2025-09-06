@@ -10,7 +10,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  
+
   const { isAuthenticated, user } = useAuth();
   const { getCartCount } = useCart();
   const navigate = useNavigate();
@@ -22,6 +22,12 @@ const Header = () => {
     { name: 'Home', href: '/', current: location.pathname === '/' },
     { name: 'Products', href: '/products', current: location.pathname === '/products' },
   ];
+
+  // Helper function to get initials (copied from UserMenu)
+  const getInitials = (firstName, lastName) => {
+    if (!firstName && !lastName) return 'N/A';
+  return `${(firstName?.charAt(0) || '')}${(lastName?.charAt(0) || '')}`.toUpperCase();
+  };
 
   const handleCreateProduct = () => {
     if (!isAuthenticated) {
@@ -61,11 +67,10 @@ const Header = () => {
               <Link
                 key={item.name}
                 to={item.href}
-                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  item.current
-                    ? 'text-primary-600 bg-primary-50'
-                    : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
-                }`}
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${item.current
+                  ? 'text-primary-600 bg-primary-50'
+                  : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                  }`}
               >
                 {item.name}
               </Link>
@@ -108,16 +113,12 @@ const Header = () => {
                   onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                   className="flex items-center space-x-2 p-2 text-gray-600 hover:text-primary-600 transition-colors"
                 >
-                  <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                    {user?.profileImage ? (
-                      <img
-                        src={user.profileImage}
-                        alt={user.firstName}
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                    ) : (
-                      <User className="w-4 h-4 text-primary-600" />
-                    )}
+                  <div className="w-8 h-8 rounded-full flex items-center justify-center">
+                    <img
+                      src="/default_avatar.png"
+                      alt="Profile"
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
                   </div>
                   <span className="text-sm font-medium">{user?.firstName}</span>
                 </button>
@@ -196,16 +197,15 @@ const Header = () => {
                   key={item.name}
                   to={item.href}
                   onClick={() => setIsMenuOpen(false)}
-                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                    item.current
-                      ? 'text-primary-600 bg-primary-50'
-                      : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
-                  }`}
+                  className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${item.current
+                    ? 'text-primary-600 bg-primary-50'
+                    : 'text-gray-700 hover:text-primary-600 hover:bg-gray-50'
+                    }`}
                 >
                   {item.name}
                 </Link>
               ))}
-              
+
               <div className="border-t border-gray-200 pt-4 mt-4">
                 {isAuthenticated ? (
                   <div className="space-y-2">

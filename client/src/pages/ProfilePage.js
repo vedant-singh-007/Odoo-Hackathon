@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useQuery } from 'react-query';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Calendar, 
-  Edit, 
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  Edit,
   Shield,
   Star,
   Package,
@@ -68,7 +68,7 @@ const ProfilePage = () => {
     <>
       <Helmet>
         <title>{profile.fullName || profile.username} - EcoFinds</title>
-        <meta name="description" content={`View ${profile.fullName || profile.username}'s profile on EcoFinds.`} />
+  <meta name="description" content={`View ${(profile.fullName || profile.username)}'s profile on EcoFinds.`} />
       </Helmet>
 
       <div className="min-h-screen bg-gray-50">
@@ -78,16 +78,12 @@ const ProfilePage = () => {
             <div className="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
               {/* Avatar */}
               <div className="relative">
-                <div className="w-24 h-24 bg-primary-100 rounded-full flex items-center justify-center">
-                  {profile.profileImage ? (
-                    <img
-                      src={profile.profileImage}
-                      alt={profile.fullName || profile.username}
-                      className="w-24 h-24 rounded-full object-cover"
-                    />
-                  ) : (
-                    <User className="w-12 h-12 text-primary-600" />
-                  )}
+                <div className="w-24 h-24 bg-gray-200 rounded-full overflow-hidden flex items-center justify-center">
+                  <img
+                    src="/default_avatar.png"
+                    alt="Default profile picture"
+                    className="w-24 h-24 object-cover"
+                  />
                 </div>
                 {profile.isVerified && (
                   <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
@@ -100,14 +96,14 @@ const ProfilePage = () => {
               <div className="flex-1">
                 <div className="flex items-center space-x-3 mb-2">
                   <h1 className="text-3xl font-bold text-gray-900">
-                    {profile.fullName || `${profile.firstName} ${profile.lastName}`}
+                    {profile.fullName || `${profile.firstName || ''} ${profile.lastName || ''}`}
                   </h1>
                   {profile.isVerified && (
                     <span className="badge badge-primary">Verified</span>
                   )}
                 </div>
                 <p className="text-lg text-gray-600 mb-2">@{profile.username}</p>
-                
+
                 {profile.bio && (
                   <p className="text-gray-700 mb-4 max-w-2xl">{profile.bio}</p>
                 )}
@@ -203,11 +199,11 @@ const ProfilePage = () => {
                     </button>
                   )}
                 </div>
-                
+
                 <div className="text-center py-8">
                   <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600">
-                    {isOwnProfile 
+                    {isOwnProfile
                       ? 'You haven\'t created any listings yet'
                       : 'This user hasn\'t created any public listings'
                     }

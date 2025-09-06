@@ -63,19 +63,15 @@ const UserMenu = ({ onClose }) => {
       <div className="px-4 py-3 border-b border-gray-100">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-            {user?.profileImage ? (
-              <img
-                src={user.profileImage}
-                alt={user.firstName}
-                className="w-10 h-10 rounded-full object-cover"
-              />
-            ) : (
-              <User className="w-5 h-5 text-primary-600" />
-            )}
+            <img
+              src="/default_avatar.png"
+              alt="Profile"
+              className="w-10 h-10 rounded-full object-cover"
+            />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900 truncate">
-              {user?.fullName || `${user?.firstName} ${user?.lastName}`}
+              {user?.fullName || `${user?.firstName || ''} ${user?.lastName || ''}`}
             </p>
             <p className="text-sm text-gray-500 truncate">
               @{user?.username}
