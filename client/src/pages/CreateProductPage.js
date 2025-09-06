@@ -14,11 +14,17 @@ import {
 } from 'lucide-react';
 
 import { productAPI } from '../services/api';
+import ImageQualityChecker from '../components/common/ImageQualityChecker';
+import BlurryImageModal from '../components/common/BlurryImageModal';
+import { analyzeImages, BLUR_CONFIG } from '../utils/imageQualityChecker';
 
 const CreateProductPage = () => {
   const navigate = useNavigate();
   const [images, setImages] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showBlurryModal, setShowBlurryModal] = useState(false);
+  const [blurryImages, setBlurryImages] = useState([]);
+  const [isAnalyzingImages, setIsAnalyzingImages] = useState(false);
 
   const {
     register,
@@ -52,26 +58,33 @@ const CreateProductPage = () => {
     'Poor'
   ];
 
-  const handleImageUpload = (event) => {
+  const handleImageUpload = async (event) => {
     const files = Array.from(event.target.files);
     
-    files.forEach(file => {
+    for (const file of files) {
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
         alert('Image size must be less than 5MB');
-        return;
+        continue;
       }
 
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setImages(prev => [...prev, {
+      reader.onload = async (e) => {
+        const newImage = {
           id: Date.now() + Math.random(),
           url: e.target.result,
           file,
-          isPrimary: prev.length === 0
-        }]);
+          isPrimary: images.length === 0
+        };
+        
+        setImages(prev => [...prev, newImage]);
+        
+        // Analyze image quality after adding to state
+        setTimeout(() => {
+          analyzeImageQuality([newImage]);
+        }, 100);
       };
       reader.readAsDataURL(file);
-    });
+    }
   };
 
   const removeImage = (imageId) => {
@@ -90,6 +103,57 @@ const CreateProductPage = () => {
       ...img,
       isPrimary: img.id === imageId
     })));
+  };
+
+  const analyzeImageQuality = async (imagesToAnalyze) => {
+    if (!imagesToAnalyze || imagesToAnalyze.length === 0) return;
+    
+    setIsAnalyzingImages(true);
+    
+    try {
+      const results = await analyzeImages(imagesToAnalyze, BLUR_CONFIG.threshold);
+      const blurryImagesFound = results.filter(result => result.blurAnalysis?.isBlurry);
+      
+      if (blurryImagesFound.length > 0) {
+        setBlurryImages(blurryImagesFound);
+        setShowBlurryModal(true);
+      }
+      
+      // Update images with analysis results
+      setImages(prev => prev.map(img => {
+        const analysisResult = results.find(r => r.id === img.id);
+        return analysisResult ? { ...img, blurAnalysis: analysisResult.blurAnalysis } : img;
+      }));
+    } catch (error) {
+      console.error('Image quality analysis failed:', error);
+    } finally {
+      setIsAnalyzingImages(false);
+    }
+  };
+
+  const handleRemoveBlurryImages = () => {
+    const blurryImageIds = blurryImages.map(img => img.id);
+    setImages(prev => prev.filter(img => !blurryImageIds.includes(img.id)));
+    setBlurryImages([]);
+  };
+
+  const handleRemoveBlurryImage = (imageId) => {
+    setImages(prev => prev.filter(img => img.id !== imageId));
+    setBlurryImages(prev => prev.filter(img => img.id !== imageId));
+  };
+
+  const handleKeepBlurryImages = () => {
+    setBlurryImages([]);
+  };
+
+  const handleRetakePhotos = () => {
+    // Clear all images and focus on file input
+    setImages([]);
+    setBlurryImages([]);
+    const fileInput = document.getElementById('image-upload');
+    if (fileInput) {
+      fileInput.click();
+    }
   };
 
   const onSubmit = async (data) => {
@@ -372,45 +436,67 @@ const CreateProductPage = () => {
                   {/* Image Preview */}
                   {images.length > 0 && (
                     <div>
-                      <h3 className="text-sm font-medium text-gray-700 mb-3">
-                        Uploaded Images ({images.length})
-                      </h3>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-medium text-gray-700">
+                          Uploaded Images ({images.length})
+                        </h3>
+                        {isAnalyzingImages && (
+                          <div className="flex items-center space-x-2 text-sm text-gray-500">
+                            <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+                            <span>Analyzing quality...</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {images.map((image, index) => (
-                          <div key={image.id} className="relative group">
-                            <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
-                              <img
-                                src={image.url}
-                                alt={`Upload ${index + 1}`}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                            
-                            {/* Primary Badge */}
-                            {image.isPrimary && (
-                              <div className="absolute top-2 left-2">
-                                <span className="badge badge-primary text-xs">Primary</span>
+                          <div key={image.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                            <div className="relative group mb-3">
+                              <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden">
+                                <img
+                                  src={image.url}
+                                  alt={`Upload ${index + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
                               </div>
-                            )}
-                            
-                            {/* Actions */}
-                            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center space-x-2">
-                              <button
-                                type="button"
-                                onClick={() => setPrimaryImage(image.id)}
-                                disabled={image.isPrimary}
-                                className="btn-primary btn-sm disabled:opacity-50"
-                              >
-                                {image.isPrimary ? 'Primary' : 'Set Primary'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => removeImage(image.id)}
-                                className="btn-danger btn-sm"
-                              >
-                                <X className="w-4 h-4" />
-                              </button>
+                              
+                              {/* Primary Badge */}
+                              {image.isPrimary && (
+                                <div className="absolute top-2 left-2">
+                                  <span className="badge badge-primary text-xs">Primary</span>
+                                </div>
+                              )}
+                              
+                              {/* Actions */}
+                              <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center space-x-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setPrimaryImage(image.id)}
+                                  disabled={image.isPrimary}
+                                  className="btn-primary btn-sm disabled:opacity-50"
+                                >
+                                  {image.isPrimary ? 'Primary' : 'Set Primary'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => removeImage(image.id)}
+                                  className="btn-danger btn-sm"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
                             </div>
+                            
+                            {/* Image Quality Checker */}
+                            <ImageQualityChecker
+                              imageUrl={image.url}
+                              onQualityCheck={(result) => {
+                                setImages(prev => prev.map(img => 
+                                  img.id === image.id ? { ...img, blurAnalysis: result } : img
+                                ));
+                              }}
+                              showDetails={false}
+                              threshold={BLUR_CONFIG.threshold}
+                            />
                           </div>
                         ))}
                       </div>
@@ -528,6 +614,16 @@ const CreateProductPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Blurry Image Modal */}
+      <BlurryImageModal
+        isOpen={showBlurryModal}
+        onClose={() => setShowBlurryModal(false)}
+        onRetake={handleRetakePhotos}
+        blurryImages={blurryImages}
+        onRemoveBlurry={handleRemoveBlurryImages}
+        onKeepAnyway={handleKeepBlurryImages}
+      />
     </>
   );
 };
